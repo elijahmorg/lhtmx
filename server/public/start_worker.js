@@ -1,4 +1,4 @@
-navigator.serviceWorker.register("resources/sw.js");
+navigator.serviceWorker.register("sw.js");
 
 // async function hello() {
 //   const name = document.querySelector("#name").value;

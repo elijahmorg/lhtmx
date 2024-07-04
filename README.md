@@ -1,3 +1,13 @@
+# Build instructions
+
+```
+cd web
+GOOS=js GOARCH=wasm go build -o main.wasm . ; cp main.wasm ../server/public
+cd ../server
+go run main.go
+```
+
+
 # Todo List Application with `elem-go`, `htmx`, and `Go Fiber`
 
 This project is a Todo List web application built with Go using the `Go Fiber` framework. It features server-side rendering of HTML with `elem-go` and uses `htmx` to handle asynchronous actions without needing to reload the page.

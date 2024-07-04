@@ -1,0 +1,6 @@
+{{define "uncheckedTodo"}}
+<li id="todo-{{.ID}}">
+    <input hx-post="/toggle/{{.ID}}" hx-target="#todo-{{.ID}}" type="checkbox">
+    <span style="text-decoration: none;">{{.Text}}</span>
+</li>
+{{end}}

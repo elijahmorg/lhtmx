@@ -1,0 +1,26 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://unpkg.com/htmx.org"></script>
+        <script src="wasm_exec.js"></script>
+        <script src="start_worker.js"></script>
+    </head>
+    <div style="background-color: #f9f9f9; border: 1px solid #ccc; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); margin: 40px auto; max-width: 300px; padding: 20px;">
+        <h1>Todo List</h1>
+        <form action="/add" method="post">
+            <input name="newTodo" placeholder="Add new task..." style="background-color: #f9f9f9; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; padding: 10px; width: 100%;" type="text">
+            <button style="background-color: #007BFF; border-radius: 4px; border-style: none; color: white; cursor: pointer; font-size: 14px; height: 36px; margin-right: 10px; padding: 8px 12px; width: 100%;" type="submit">Add</button>
+        </form>
+        <ul style="list-style-type: none; padding: 0; width: 100%;">
+            {{range .Todos}}
+                {{if .Checked}}
+                    {{template "checkedTodo" .}}
+                {{else}}
+                    {{template "uncheckedTodo" .}}
+                {{end}}
+            {{end}}
+        </ul>
+    </div>
+</html>
+{{end}}

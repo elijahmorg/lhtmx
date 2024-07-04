@@ -33,10 +33,27 @@ function registerWasmHTTPListener(wasm, { base, args = [] } = {}) {
   ) => go.run(instance));
 
   addEventListener("fetch", (e) => {
+    const url = new URL(e.request.url);
     const { pathname } = new URL(e.request.url);
-    if (!pathname.startsWith(path)) return;
-
-    e.respondWith(handlerPromise.then((handler) => handler(e.request)));
+    console.log(e);
+    console.log("pathname: ", pathname);
+    console.log("path: ", path);
+    if (
+      pathname === "/wasm_exec.js" || pathname == "/sw.js" ||
+      pathname === "/start_worker.js"
+    ) {
+      e.respondWith(fetch(e.request));
+      return;
+    } else if (url.hostname === "localhost") {
+      e.respondWith(handlerPromise.then((handler) => handler(e.request)));
+    } else {
+      // For requests to other domains, just pass them along to the network
+      e.respondWith(fetch(e.request));
+    }
+    // if (!pathname.startsWith(path)) {
+    //   console.log("fallback to network");
+    //   return fetch(request);
+    // }
   });
 }
 

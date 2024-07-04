@@ -80,8 +80,8 @@ func RenderTodos(todos []Todo) string {
 
 	headContent := elem.Head(nil,
 		elem.Script(attrs.Props{attrs.Src: "https://unpkg.com/htmx.org"}),
-		elem.Script(attrs.Props{attrs.Src: "resources/wasm_exec.js"}),
-		elem.Script(attrs.Props{attrs.Src: "resources/start_worker.js"}),
+		elem.Script(attrs.Props{attrs.Src: "wasm_exec.js"}),
+		elem.Script(attrs.Props{attrs.Src: "start_worker.js"}),
 	)
 
 	bodyContent := elem.Div(
