@@ -10,6 +10,7 @@ require (
 
 require (
 	github.com/chasefleming/elem-go v0.25.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/nlepage/go-js-promise v1.0.0 // indirect
 )
 

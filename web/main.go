@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/elijahmorg/lhtmx/htmx"
 	"github.com/julienschmidt/httprouter"
@@ -12,6 +16,11 @@ import (
 )
 
 func main() {
+	err := getData()
+	if err != nil {
+		fmt.Println("error syncing data with server")
+	}
+
 	router := httprouter.New()
 	router.GET("/", renderTodosRoute)
 	router.POST("/toggle/:id", toggleTodoRoute)
@@ -22,6 +31,7 @@ func main() {
 	// router.GET("/hello/:name", toggleTodoRoute)
 	fmt.Println("hello world I am here")
 	wasmhttp.Serve(router)
+	getData()
 	select {}
 }
 
@@ -35,7 +45,7 @@ func notFound() http.Handler {
 func renderTodosRoute(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	fmt.Println("hello world I am here: renderTodosRoute")
 	io.WriteString(w, htmx.RenderTodos(htmx.Todos))
-	return
+	syncData()
 }
 
 func toggleTodoRoute(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -50,6 +60,7 @@ func toggleTodoRoute(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		}
 	}
 	io.WriteString(w, htmx.CreateTodoNode(updatedTodo).Render())
+	syncData()
 }
 
 func addTodoRoute(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -58,16 +69,76 @@ func addTodoRoute(w http.ResponseWriter, r *http.Request, ps httprouter.Params) 
 	err := r.ParseForm()
 	if err != nil {
 		http.Error(w, "Error parsing form", http.StatusBadRequest)
+		fmt.Println("hello world I am here: error: ", err)
 		return
 	}
 
 	// Get a single value
 	todoTitle := r.FormValue("newTodo")
 	// todoTitle := ps.ByName("title")
+	todo := htmx.Todo{ID: len(htmx.Todos) + 1, Title: todoTitle, Done: false, TimeID: time.Now().Unix()}
 	if todoTitle != "" {
-		htmx.Todos = append(htmx.Todos, htmx.Todo{ID: len(htmx.Todos) + 1, Title: todoTitle, Done: false})
+		htmx.Todos = append(htmx.Todos, todo)
 	}
-	renderTodosRoute(w, r, ps)
+	// renderTodosRoute(w, r, ps)
+	fmt.Println("hello world I am here: writing response")
+	io.WriteString(w, htmx.RenderBody(htmx.Todos))
 
-	http.Redirect(w, r, "/", http.StatusFound)
+	syncData()
+}
+
+func syncData() {
+	go syncDataRoutine()
+}
+
+func syncDataRoutine() {
+	b := bytes.NewBuffer([]byte(""))
+	json.NewEncoder(b).Encode(htmx.Todos)
+
+	resp, err := http.Post("http://localhost:3000/sync", "application/json", b)
+	if err != nil {
+		fmt.Println("error syncing data: ", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		err = errors.New("bad status code for sync")
+		fmt.Println("error syncing data: ", err)
+		return
+	}
+	todos := make([]htmx.Todo, 0)
+	err = json.NewDecoder(resp.Body).Decode(&todos)
+	if err != nil {
+		fmt.Println("error decoding response: ", err)
+	}
+
+	todos, err = htmx.MergeChanges(htmx.Todos, todos)
+	if err != nil {
+		fmt.Println("error merging: ", err)
+	}
+
+	htmx.Todos = todos
+}
+
+func getData() error {
+
+	fmt.Println("get data from server for syncing")
+	resp, err := http.Get("http://localhost:3000/sync")
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		err = errors.New("bad status code for sync")
+		fmt.Println(err)
+		return err
+	}
+	todos := make([]htmx.Todo, 0)
+	json.NewDecoder(resp.Body).Decode(&todos)
+
+	todos, err = htmx.MergeChanges(htmx.Todos, todos)
+	if err != nil {
+		return err
+	}
+
+	htmx.Todos = todos
+	return nil
 }
