@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/elijahmorg/lhtmx/htmx"
-	"github.com/julienschmidt/httprouter"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	wasmhttp "github.com/nlepage/go-wasm-http-server"
 )
 
@@ -20,19 +20,28 @@ func main() {
 	if err != nil {
 		fmt.Println("error syncing data with server")
 	}
+	go getData()
 
-	router := httprouter.New()
-	router.GET("/", renderTodosRoute)
-	router.POST("/toggle/:id", toggleTodoRoute)
-	router.POST("/add", addTodoRoute)
-	router.NotFound = notFound()
-	// router.NotFound = notFound
-	// router.GET("/", renderTodosRoute)
-	// router.GET("/hello/:name", toggleTodoRoute)
-	fmt.Println("hello world I am here")
-	wasmhttp.Serve(router)
-	getData()
+	echoStart()
 	select {}
+}
+
+func echoStart() {
+	// Echo instance
+	e := echo.New()
+
+	// Middleware
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	// Routes
+	e.GET("/", renderTodosRoute)
+	e.POST("/toggle/:id", toggleTodoRoute)
+	e.POST("/add", addTodoRoute)
+	// e.Server.Handler
+
+	// Start server
+	wasmhttp.Serve(e.Server.Handler)
 }
 
 func notFound() http.Handler {
@@ -42,16 +51,17 @@ func notFound() http.Handler {
 		fmt.Fprintln(w, "This is the people handler.")
 	})
 }
-func renderTodosRoute(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func renderTodosRoute(c echo.Context) error {
 	fmt.Println("hello world I am here: renderTodosRoute")
-	io.WriteString(w, htmx.RenderTodos(htmx.Todos))
+	c.HTML(http.StatusOK, htmx.RenderTodos(htmx.Todos))
 	syncData()
+	return nil
 }
 
-func toggleTodoRoute(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func toggleTodoRoute(c echo.Context) error {
 	fmt.Println("hello world I am here: toggleTodoRoute")
 	var updatedTodo htmx.Todo
-	id, _ := strconv.Atoi(ps.ByName("id"))
+	id, _ := strconv.Atoi(c.Param("id"))
 	for i, todo := range htmx.Todos {
 		if todo.ID == id {
 			htmx.Todos[i].Done = !todo.Done
@@ -59,32 +69,29 @@ func toggleTodoRoute(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 			break
 		}
 	}
-	io.WriteString(w, htmx.CreateTodoNode(updatedTodo).Render())
+	err := c.HTML(http.StatusOK, htmx.CreateTodoNode(updatedTodo).Render())
 	syncData()
+	return err
 }
 
-func addTodoRoute(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func addTodoRoute(c echo.Context) error {
 	fmt.Println("hello world I am here: addTodoRoute")
-	// Parse the form data
-	err := r.ParseForm()
-	if err != nil {
-		http.Error(w, "Error parsing form", http.StatusBadRequest)
-		fmt.Println("hello world I am here: error: ", err)
-		return
+	todoTitle := c.FormValue("newTodo")
+	fmt.Println("TodoTitle: ", todoTitle)
+	if todoTitle == "" {
+		return c.String(http.StatusBadRequest, "no title provided")
 	}
 
 	// Get a single value
-	todoTitle := r.FormValue("newTodo")
-	// todoTitle := ps.ByName("title")
 	todo := htmx.Todo{ID: len(htmx.Todos) + 1, Title: todoTitle, Done: false, TimeID: time.Now().Unix()}
 	if todoTitle != "" {
 		htmx.Todos = append(htmx.Todos, todo)
 	}
-	// renderTodosRoute(w, r, ps)
 	fmt.Println("hello world I am here: writing response")
-	io.WriteString(w, htmx.RenderBody(htmx.Todos))
+	err := c.HTML(http.StatusOK, htmx.RenderBody(htmx.Todos))
 
 	syncData()
+	return err
 }
 
 func syncData() {
