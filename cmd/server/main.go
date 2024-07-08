@@ -84,3 +84,11 @@ func getTodos(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, htmx.Todos)
 }
+
+// ServerDelay middleware adds a `Server` header to the response.
+func ServerDelay(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		time.Sleep(1000 * time.Millisecond)
+		return next(c)
+	}
+}

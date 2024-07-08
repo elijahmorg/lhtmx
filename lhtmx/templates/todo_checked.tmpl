@@ -1,6 +1,0 @@
-{{define "checkedTodo"}}
-<li id="todo-{{.ID}}">
-    <input checked hx-post="/toggle/{{.ID}}" hx-target="#todo-{{.ID}}" type="checkbox">
-    <span style="text-decoration: line-through;">{{.Text}}</span>
-</li>
-{{end}}
