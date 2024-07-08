@@ -1,10 +1,22 @@
 # Build instructions
 
 ```
-cd web
-GOOS=js GOARCH=wasm go build -o main.wasm . ; cp main.wasm ../server/public
+cp "$(go env GOROOT)/misc/wasm/wasm_exec.js" ./public/
+cd ./cmd/web/
+GOOS=js GOARCH=wasm go build -o main.wasm . ; cp main.wasm ../../public
 cd ../server
 go run main.go
+```
+
+
+# TinyGo
+
+Unfortunately tinygo can't compile most of the net/http packages
+
+## WASM Exec JS
+
+```
+cp $(tinygo env TINYGOROOT)/targets/wasm_exec.js .
 ```
 
 
