@@ -14,19 +14,10 @@ import (
 )
 
 func renderTodosRoute(c echo.Context) error {
-	time.Sleep(1000 * time.Millisecond)
 	return c.HTML(http.StatusOK, htmx.RenderTodos(htmx.Todos))
 }
 
-func renderTodosRoute2(c echo.Context) error {
-	fmt.Println("hello world I am here: renderTodosRoute")
-	c.HTML(http.StatusOK, htmx.RenderTodos(htmx.Todos))
-	SyncData()
-	return nil
-}
-
 func toggleTodoRoute(c echo.Context) error {
-	time.Sleep(1000 * time.Millisecond)
 	id, _ := strconv.Atoi(c.Param("id"))
 	var updatedTodo htmx.Todo
 	for i, todo := range htmx.Todos {
@@ -38,21 +29,6 @@ func toggleTodoRoute(c echo.Context) error {
 	}
 	return c.HTML(http.StatusOK, htmx.CreateTodoNode(updatedTodo).Render())
 }
-func toggleTodoRoute2(c echo.Context) error {
-	fmt.Println("hello world I am here: toggleTodoRoute")
-	var updatedTodo htmx.Todo
-	id, _ := strconv.Atoi(c.Param("id"))
-	for i, todo := range htmx.Todos {
-		if todo.ID == id {
-			htmx.Todos[i].Done = !todo.Done
-			updatedTodo = htmx.Todos[i]
-			break
-		}
-	}
-	err := c.HTML(http.StatusOK, htmx.CreateTodoNode(updatedTodo).Render())
-	SyncData()
-	return err
-}
 
 func addTodoRoute(c echo.Context) error {
 	fmt.Println("hello world I am here: addTodoRoute")
@@ -63,31 +39,17 @@ func addTodoRoute(c echo.Context) error {
 	}
 
 	// Get a single value
-	todo := htmx.Todo{ID: len(htmx.Todos) + 1, Title: todoTitle, Done: false, TimeID: time.Now().Unix()}
+	todo := htmx.Todo{ID: len(htmx.Todos) + 1, Title: todoTitle, Done: false, TimeID: time.Now().UnixMicro()}
 	if todoTitle != "" {
 		htmx.Todos = append(htmx.Todos, todo)
 	}
 	fmt.Println("hello world I am here: writing response")
 	err := c.HTML(http.StatusOK, htmx.RenderBody(htmx.Todos))
 
-	SyncData()
 	return err
 }
 
-func addTodoRoute2(c echo.Context) error {
-	time.Sleep(1000 * time.Millisecond)
-
-	fmt.Println("addTodoRouteServer")
-	// newTitle := utils.CopyString(c.FormValue("newTodo"))
-	newTitle := c.FormValue("newTodo")
-	if newTitle != "" {
-		htmx.Todos = append(htmx.Todos, htmx.Todo{ID: len(htmx.Todos) + 1, Title: newTitle, Done: false, TimeID: time.Now().Unix()})
-	}
-	return c.HTML(http.StatusOK, htmx.RenderBody(htmx.Todos))
-}
-
 func syncTodos(c echo.Context) error {
-	time.Sleep(1000 * time.Millisecond)
 	var todos []htmx.Todo
 	err := c.Bind(&todos)
 	if err != nil {
@@ -102,9 +64,7 @@ func syncTodos(c echo.Context) error {
 }
 
 func getTodos(c echo.Context) error {
-	time.Sleep(1000 * time.Millisecond)
 	fmt.Println("got new todos")
-
 	return c.JSON(http.StatusOK, htmx.Todos)
 }
 

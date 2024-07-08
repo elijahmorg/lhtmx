@@ -88,9 +88,9 @@ var (
 func RenderTodos(todos []Todo) string {
 	if len(todos) == 0 {
 		todos = []Todo{
-			{ID: 0, Title: "Zero task", Done: false, TimeID: time.Now().Unix()},
-			{ID: 1, Title: "First task", Done: false, TimeID: time.Now().Unix()},
-			{ID: 2, Title: "Second task", Done: true, TimeID: time.Now().Unix()},
+			{ID: 0, Title: "Zero task", Done: false, TimeID: time.Now().UnixMicro()},
+			{ID: 1, Title: "First task", Done: false, TimeID: time.Now().UnixMicro() + 1},
+			{ID: 2, Title: "Second task", Done: true, TimeID: time.Now().UnixMicro() + 2},
 		}
 		Todos = todos
 	}
