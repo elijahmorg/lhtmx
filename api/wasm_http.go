@@ -1,24 +1,28 @@
-//go:build !js
+//go:build js
 
-package main
+package api
 
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	wasmhttp "github.com/nlepage/go-wasm-http-server"
 )
 
-func echoStart() {
+func EchoStart() {
 	// Echo instance
 	e := echo.New()
 
 	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(SyncToServer)
 
 	// Routes
 	e.GET("/", renderTodosRoute)
 	e.POST("/toggle/:id", toggleTodoRoute)
 	e.POST("/add", addTodoRoute)
-	// e.Server.Handler
-	e.Logger.Fatal(e.Start(":3000"))
+
+	// Start server
+	wasmhttp.Serve(e.Server.Handler)
+	select {}
 }
