@@ -114,7 +114,7 @@ func RenderBody(todos []Todo) string {
 func Body(todos []Todo) *elem.Element {
 	bodyContent := elem.Div(
 		attrs.Props{attrs.Style: centerContainerStyle.ToInline()},
-		elem.H1(nil, elem.Text("Todo List")),
+		elem.H1(nil, elem.Text("Yet Another Todo App")),
 		elem.Form(
 			// attrs.Props{attrs.Method: "post", attrs.Action: "/add"},
 			attrs.Props{
